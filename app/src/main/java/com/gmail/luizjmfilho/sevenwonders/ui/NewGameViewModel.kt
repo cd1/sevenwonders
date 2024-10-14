@@ -2,7 +2,7 @@ package com.gmail.luizjmfilho.sevenwonders.ui
 
 import androidx.lifecycle.viewModelScope
 import com.gmail.luizjmfilho.sevenwonders.data.NewGameRepository
-import com.gmail.luizjmfilho.sevenwonders.model.Person
+import com.gmail.luizjmfilho.sevenwonders.model.Player
 import com.google.firebase.analytics.FirebaseAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +21,7 @@ class NewGameViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(NewGameUiState())
     val uiState: StateFlow<NewGameUiState> = _uiState.asStateFlow()
 
-    private val persons = MutableList<Person?>( 7 ) { null }
+    private val players = MutableList<Player?>( 7 ) { null }
     private var playerIndexThatGoesToPlayerListScreen: Int? = null
 
     fun setPlayerNames(selectedIdFromPlayerListScreen: Int) {
@@ -30,8 +30,8 @@ class NewGameViewModel @Inject constructor(
             viewModelScope.launch {
                 val playerSelected =
                     newGameRepository.getPlayerFromId(selectedIdFromPlayerListScreen)
-                persons[fixedPlayerIndex] = playerSelected
-                val newPlayerNames = persons.map { it?.name.orEmpty() }.toMutableList()
+                players[fixedPlayerIndex] = playerSelected
+                val newPlayerNames = players.map { it?.name.orEmpty() }.toMutableList()
                 newPlayerNames[fixedPlayerIndex] = playerSelected.name
                 _uiState.update { currentState ->
                     currentState.copy(
@@ -50,7 +50,7 @@ class NewGameViewModel @Inject constructor(
     }
 
     fun getPlayerIds(): List<Int> {
-        return persons.mapNotNull{
+        return players.mapNotNull{
             it?.id
         }
     }

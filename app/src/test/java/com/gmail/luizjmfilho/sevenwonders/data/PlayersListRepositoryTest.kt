@@ -12,7 +12,7 @@ import org.mockito.kotlin.whenever
 
 class PlayersListRepositoryTest {
 
-    private lateinit var dao: PersonDao
+    private lateinit var dao: PlayerDao
     private lateinit var repository: PlayersListRepository
 
     @Before
@@ -22,7 +22,7 @@ class PlayersListRepositoryTest {
     }
 
     private suspend fun mockNumberOfPlayersWithThisNickname(searchedNickname: String, result: Int) {
-        whenever(dao.numberOfPlayersWithThisName(searchedNickname))
+        whenever(dao.selectNameAlreadyExists(searchedNickname))
             .thenReturn(result)
     }
 

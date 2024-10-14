@@ -4,8 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.gmail.luizjmfilho.sevenwonders.data.CalculationRepository
 import com.gmail.luizjmfilho.sevenwonders.model.Match
-import com.gmail.luizjmfilho.sevenwonders.model.Person
-import com.gmail.luizjmfilho.sevenwonders.model.PlayerDetail
+import com.gmail.luizjmfilho.sevenwonders.model.Player
+import com.gmail.luizjmfilho.sevenwonders.model.PlayerInMatch
 import com.google.firebase.analytics.FirebaseAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 import javax.inject.Inject
 
 @HiltViewModel
@@ -32,7 +33,7 @@ class CalculationViewModel @Inject constructor(
         .split(",")
         .map { WonderSide.valueOf(it) }
 
-    private var persons: List<Person> = emptyList()
+    private var players: List<Player> = emptyList()
     private var playerDetails: List<PlayerDetail> = emptyList()
 
     private val _uiState = MutableStateFlow(CalculationUiState())
@@ -40,14 +41,14 @@ class CalculationViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            persons = calculationRepository.getPersonsFromIds(playerIds).sortedBy { playerIds.indexOf(it.id) }
-            playerDetails = persons.mapIndexed { index, person ->
-                PlayerDetail(person.name, wonders[index], wonderSide[index])
+            players = calculationRepository.getPlayersFromIds(playerIds).sortedBy { playerIds.indexOf(it.id) }
+            playerDetails = players.mapIndexed { index, player ->
+                PlayerDetail(player, wonders[index], wonderSide[index])
             }
             
             _uiState.update { currentState ->
                 currentState.copy(
-                    playersList = playerDetails.map { it.nickname },
+                    playerNames = playerDetails.map { it.player.name },
                     totalScoreList = List(playerDetails.size) { 0 },
                     wonderBoardScoreList = List(playerDetails.size) { 0 },
                     coinScoreList = List(playerDetails.size) { 0 },
@@ -251,12 +252,12 @@ class CalculationViewModel @Inject constructor(
             _uiState.update { currentState ->
                 val newCoinScoreList = currentState.coinScoreList.toMutableList()
                 val newTotalScoreList = currentState.totalScoreList.toMutableList()
-                val previousCoinScore = currentState.coinScoreList[currentState.playersList.indexOf(playerNickname)]
-                val coinsQuantity = currentState.coinQuantityList[currentState.playersList.indexOf(playerNickname)]
+                val previousCoinScore = currentState.coinScoreList[currentState.playerNames.indexOf(playerNickname)]
+                val coinsQuantity = currentState.coinQuantityList[currentState.playerNames.indexOf(playerNickname)]
                 val coinsPoint = coinsQuantity/3
 
-                newCoinScoreList[currentState.playersList.indexOf(playerNickname)] = coinsPoint
-                newTotalScoreList[currentState.playersList.indexOf(playerNickname)] = newTotalScoreList[currentState.playersList.indexOf(playerNickname)] - previousCoinScore + coinsPoint
+                newCoinScoreList[currentState.playerNames.indexOf(playerNickname)] = coinsPoint
+                newTotalScoreList[currentState.playerNames.indexOf(playerNickname)] = newTotalScoreList[currentState.playerNames.indexOf(playerNickname)] - previousCoinScore + coinsPoint
 
                 currentState.copy(
                     coinScoreList = newCoinScoreList,
@@ -294,11 +295,11 @@ class CalculationViewModel @Inject constructor(
                 val sciencePoints = compassQuantityPoints + stoneQuantityPoints + gearQuantityPoints + combinationPoints
 
                 val scienceList = currentState.greenCardScoreList.toMutableList()
-                val previousSciencePoints = scienceList[currentState.playersList.indexOf(name)]
-                    scienceList[currentState.playersList.indexOf(name)] = sciencePoints
+                val previousSciencePoints = scienceList[currentState.playerNames.indexOf(name)]
+                    scienceList[currentState.playerNames.indexOf(name)] = sciencePoints
 
                 val totalList = currentState.totalScoreList.toMutableList()
-                totalList[currentState.playersList.indexOf(name)] = (totalList[currentState.playersList.indexOf(name)] - previousSciencePoints + sciencePoints)
+                totalList[currentState.playerNames.indexOf(name)] = (totalList[currentState.playerNames.indexOf(name)] - previousSciencePoints + sciencePoints)
 
                 currentState.copy(
                     greenCardScoreList = scienceList,
@@ -310,12 +311,10 @@ class CalculationViewModel @Inject constructor(
         }
     }
 
-    fun addPlayerMatchInfo(dateAndTime: String) {
+    fun addMatch() {
         viewModelScope.launch {
             _uiState.update { currentState ->
-                val matchId = if (calculationRepository.getLastMatchId() == null) 1 else calculationRepository.getLastMatchId()!! + 1
-
-                val nicknameList = currentState.playersList
+                val nicknameList = currentState.playerNames
                 val totalScoreList = currentState.totalScoreList
                 val coinQuantityList = currentState.coinQuantityList
 
@@ -341,40 +340,37 @@ class CalculationViewModel @Inject constructor(
                         Pair(nome, posicao)
                     }
 
+                val match = Match(
+                    dateTime = LocalDateTime.now(), // TODO: desugar
+                )
 
-
-                for (i in 0..< currentState.playersList.size) {
-                    val match = Match(
-                        matchId = matchId,
-                        position = sortedNicknameListWithPositions.find { it.first == currentState.playersList[i] }!!.second,
-                        dataAndTime = dateAndTime,
-                        nickname = playerDetails.map { it.nickname }[i],
-                        wonder = playerDetails.map { it.wonder }[i]!!,
-                        wonderSide = playerDetails.map { it.wonderSide }[i]!!,
+                val playersInMatch = playerDetails.mapIndexed { i, playerDetail ->
+                    PlayerInMatch(
+                        matchId = 0, // This will be set later, after the Match is actually created in the DB
+                        playerId = playerDetail.player.id,
+                        wonder = playerDetail.wonder,
+                        wonderSide = playerDetail.wonderSide,
                         totalScore = currentState.totalScoreList[i],
                         wonderBoardScore = currentState.wonderBoardScoreList[i],
                         coinScore = currentState.coinScoreList[i],
-                        coinQuantity = currentState.coinQuantityList[i],
+                        coinCount = currentState.coinQuantityList[i],
                         warScore = currentState.warScoreList[i],
                         blueCardScore = currentState.blueCardScoreList[i],
                         yellowCardScore = currentState.yellowCardScoreList[i],
                         greenCardScore = currentState.greenCardScoreList[i],
                         purpleCardScore = currentState.purpleCardScoreList[i],
+                        position = sortedNicknameListWithPositions.first { it.first == playerDetail.player.name }.second,
                     )
-                    calculationRepository.addPlayerMatchInfo(match)
                 }
-                currentState.copy()
+                val matchId = calculationRepository.addMatch(match, playersInMatch.toSet())
+                currentState.copy(createdMatchId = matchId)
             }
         }
     }
 
-    fun deleteMatch() {
-        viewModelScope.launch {
-            _uiState.update { currentState ->
-                calculationRepository.deleteLastMatch()
-                currentState.copy()
-            }
-        }
-    }
-
+    private data class PlayerDetail(
+        val player: Player,
+        val wonder: Wonders,
+        val wonderSide: WonderSide,
+    )
 }

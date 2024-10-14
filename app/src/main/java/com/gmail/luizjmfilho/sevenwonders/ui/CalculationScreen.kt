@@ -36,6 +36,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -63,13 +64,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.gmail.luizjmfilho.sevenwonders.R
 import com.gmail.luizjmfilho.sevenwonders.ui.theme.SevenWondersTheme
 import com.gmail.luizjmfilho.sevenwonders.ui.theme.science
-import java.text.DateFormat
-import java.util.Calendar
 
 @Composable
 fun CalculationScreenPrimaria(
     onBackClick: () -> Unit,
-    onConfirmNextScreen: () -> Unit,
+    onConfirmNextScreen: (Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CalculationViewModel = hiltViewModel(),
 ) {
@@ -78,9 +77,8 @@ fun CalculationScreenPrimaria(
     val uiState by viewModel.uiState.collectAsState()
     CalculationScreenSecundaria(
         onBackClick = onBackClick,
-        onNextClick = viewModel::addPlayerMatchInfo,
+        onNextClick = viewModel::addMatch,
         onConfirmNextScreen = onConfirmNextScreen,
-        onDismissNextScreen = viewModel::deleteMatch,
         onPreviousCategory = viewModel::onPreviousCategory,
         onNextCategory = viewModel::onNextCategory,
         uiState = uiState,
@@ -100,9 +98,8 @@ fun CalculationScreenPrimaria(
 @Composable
 fun CalculationScreenSecundaria(
     onBackClick: () -> Unit,
-    onNextClick: (String) -> Unit,
-    onConfirmNextScreen: () -> Unit,
-    onDismissNextScreen: () -> Unit,
+    onNextClick: () -> Unit,
+    onConfirmNextScreen: (Int) -> Unit,
     onPreviousCategory: () -> Unit,
     onNextCategory: () -> Unit,
     uiState: CalculationUiState,
@@ -117,6 +114,12 @@ fun CalculationScreenSecundaria(
     onCoinGridConfirm: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    LaunchedEffect(uiState.createdMatchId) {
+        if (uiState.createdMatchId != null) {
+            onConfirmNextScreen(uiState.createdMatchId)
+        }
+    }
+
     Scaffold (
         topBar = {
             SevenWondersAppBar(
@@ -159,7 +162,7 @@ fun CalculationScreenSecundaria(
                         when (uiState.subScreen) {
                             CalculationSubScreen.ParcialGrid -> {
                                 ScoringGrid(
-                                    nicknameList = uiState.playersList,
+                                    nicknameList = uiState.playerNames,
                                     currentCategory = uiState.currentCategory,
                                     modifier = Modifier
                                         .padding(10.dp),
@@ -180,23 +183,23 @@ fun CalculationScreenSecundaria(
                             }
                             CalculationSubScreen.TotalGrid -> {
                                 TotalScoringGrid(
-                                    nicknameList = uiState.playersList,
+                                    nicknameList = uiState.playerNames,
                                     calculationUiState = uiState,
                                     onShowParcialGrid = onShowPartialGrid,
                                 )
                             }
                             CalculationSubScreen.ScienceGrid -> {
                                 ScienceGrid(
-                                    playerShown = uiState.playersList[playerScienceOrCoinIndexBeingSelected],
+                                    playerShown = uiState.playerNames[playerScienceOrCoinIndexBeingSelected],
                                     calculationUiState = uiState,
                                     onQuantityChange = onScienceQuantityChange,
                                     onShowPartialGrid = onShowPartialGrid,
-                                    onScienceGridConfirm = { onScienceGridConfirm(uiState.playersList[playerScienceOrCoinIndexBeingSelected]) }
+                                    onScienceGridConfirm = { onScienceGridConfirm(uiState.playerNames[playerScienceOrCoinIndexBeingSelected]) }
                                 )
                             }
                             CalculationSubScreen.CoinGrid -> {
                                 CoinGrid(
-                                    playerShown = uiState.playersList[playerScienceOrCoinIndexBeingSelected],
+                                    playerShown = uiState.playerNames[playerScienceOrCoinIndexBeingSelected],
                                     calculationUiState = uiState,
                                     onQuantityChange = onCoinQuantityChange,
                                     onShowPartialGrid = onShowPartialGrid,
@@ -212,7 +215,6 @@ fun CalculationScreenSecundaria(
                             Spacer(Modifier.weight(1f))
                             TextButton(
                                 onClick = {
-                                    onNextClick(getDateAndTime())
                                     alertDialogShown = true
                                 },
                                 enabled = (uiState.currentCategory == PointCategory.PurpleCard)
@@ -237,7 +239,7 @@ fun CalculationScreenSecundaria(
                                 TextButton(
                                     onClick = {
                                         alertDialogShown = false
-                                        onConfirmNextScreen()
+                                        onNextClick()
                                     },
                                 ) {
                                     Text(text = stringResource(R.string.generic_confirm_text))
@@ -247,7 +249,6 @@ fun CalculationScreenSecundaria(
                             dismissButton = {
                                 TextButton(
                                     onClick = {
-                                        onDismissNextScreen()
                                         alertDialogShown = false
                                     }
                                 ) {
@@ -902,10 +903,10 @@ fun CoinGrid(
             )
 
             NumberInputField(
-                number = calculationUiState.coinQuantityList[calculationUiState.playersList.indexOf(playerShown)],
+                number = calculationUiState.coinQuantityList[calculationUiState.playerNames.indexOf(playerShown)],
                 textColor = Color(0xFFDD8A10),
                 shape = RoundedCornerShape(0.dp, 12.dp, 12.dp, 0.dp),
-                onNumberChange = { number -> onQuantityChange(calculationUiState.playersList.indexOf(playerShown), number) },
+                onNumberChange = { number -> onQuantityChange(calculationUiState.playerNames.indexOf(playerShown), number) },
                 modifier = Modifier.width(150.dp),
             )
         }
@@ -1047,15 +1048,6 @@ fun ScienceIconCard(
     }
 }
 
-fun getDateAndTime(): String {
-    val calendar = Calendar.getInstance().time
-    val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT).format(calendar)
-    val timeFormat = DateFormat.getTimeInstance(DateFormat.SHORT).format(calendar)
-
-    return "$dateFormat - $timeFormat"
-
-}
-
 @Preview
 @Composable
 fun CoinGridPreview() {
@@ -1063,7 +1055,7 @@ fun CoinGridPreview() {
         CoinGrid(
             playerShown = "Luiz",
             calculationUiState = CalculationUiState(
-                playersList = listOf("Luiz"),
+                playerNames = listOf("Luiz"),
             ),
             onQuantityChange = { _, _ -> },
             onShowPartialGrid = { /*TODO*/ },
@@ -1155,7 +1147,7 @@ fun CalculationScreenParcialGridSecundariaPreview() {
             onBackClick = { /*TODO*/ },
             onNextClick = {},
             uiState = CalculationUiState(
-                playersList = listOf(
+                playerNames = listOf(
                     "Zinho",
                     "Anninha",
                     "Deivinho",
@@ -1171,7 +1163,6 @@ fun CalculationScreenParcialGridSecundariaPreview() {
             onScienceQuantityChange = { _, _ -> },
             onScienceGridConfirm = {},
             onConfirmNextScreen = {},
-            onDismissNextScreen = {},
             onCoinGridConfirm = {},
             onShowCoinGrid = {_, _, _ -> },
             onCoinQuantityChange = { _, _ -> },
@@ -1187,7 +1178,7 @@ fun CalculationScreenTotalGridSecundariaPreview() {
             onBackClick = { /*TODO*/ },
             onNextClick = {},
             uiState = CalculationUiState(
-                playersList = listOf(
+                playerNames = listOf(
                     "Zinho",
                     "Anninha",
                     "Deivinho",
@@ -1203,7 +1194,6 @@ fun CalculationScreenTotalGridSecundariaPreview() {
             onScienceQuantityChange = { _, _ -> },
             onScienceGridConfirm = {},
             onConfirmNextScreen = {},
-            onDismissNextScreen = {},
             onCoinGridConfirm = {},
             onShowCoinGrid = {_, _, _ ->},
             onCoinQuantityChange = { _, _ -> },
@@ -1219,7 +1209,7 @@ fun CalculationScreenScienceGridSecundariaPreview() {
             onBackClick = { /*TODO*/ },
             onNextClick = {},
             uiState = CalculationUiState(
-                playersList = listOf(
+                playerNames = listOf(
                     "Zinho",
                     "Anninha",
                     "Deivinho",
@@ -1235,7 +1225,6 @@ fun CalculationScreenScienceGridSecundariaPreview() {
             onScienceQuantityChange = { _, _ -> },
             onShowScienceGrid = {},
             onConfirmNextScreen = {},
-            onDismissNextScreen = {},
             onCoinGridConfirm = {},
             onShowCoinGrid = {_, _, _ ->},
             onCoinQuantityChange = { _, _ -> },

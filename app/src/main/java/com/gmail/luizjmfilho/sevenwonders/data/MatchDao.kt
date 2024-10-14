@@ -3,80 +3,153 @@ package com.gmail.luizjmfilho.sevenwonders.data
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 import com.gmail.luizjmfilho.sevenwonders.model.Match
+import com.gmail.luizjmfilho.sevenwonders.model.PlayerInMatch
 import com.gmail.luizjmfilho.sevenwonders.ui.ResultadoDaConsultaSQLAverageScorePerPlayer
-import com.gmail.luizjmfilho.sevenwonders.ui.ResultadoDaConsultaSQLBestWonder
+import com.gmail.luizjmfilho.sevenwonders.ui.FrequencyPerWonder
+import com.gmail.luizjmfilho.sevenwonders.ui.Wonders
+import com.gmail.luizjmfilho.sevenwonders.ui.WonderSide
 
 @Dao
 interface MatchDao {
+    @Insert
+    suspend fun insert(match: Match): Long
 
     @Insert
-    suspend fun addPlayer(playerMatchInfo: Match)
+    suspend fun insertPlayerInMatch(playerInMatch: PlayerInMatch)
 
-    @Query("SELECT MAX(matchId) FROM `Match`")
-    suspend fun getLastMatchId(): Int?
+    @Transaction
+    suspend fun insertMatch(match: Match, playersInMatch: Set<PlayerInMatch>): Int {
+        val matchId = insert(match).toInt()
 
-    @Query("SELECT * FROM `Match` WHERE matchId = :matchId ORDER BY totalScore DESC, coinQuantity DESC")
-    suspend fun getCurrentMatchList(matchId: Int): List<Match>
+        for (playerInMatch in playersInMatch) {
+            insertPlayerInMatch(playerInMatch.copy(matchId = matchId))
+        }
 
-    @Query("DELETE FROM `Match` WHERE matchId = :matchId")
-    suspend fun deleteMatchWhoseIdIs(matchId: Int)
-
-    @Query("SELECT * FROM `Match`")
-    suspend fun selectAllMatches(): List<Match>?
-
-    @Query("UPDATE `Match` SET matchId = (matchId - 1) WHERE matchId > :idRemoved")
-    suspend fun updateAllMatchesID(idRemoved: Int)
-
-    @Query("SELECT * FROM `Match` WHERE totalScore = (SELECT MAX(totalScore) FROM `Match`) ORDER BY nickname ASC")
-    suspend fun getBestScoreList(): List<Match>?
-
-    @Query("SELECT * FROM `Match` WHERE totalScore = (SELECT MIN(totalScore) FROM `Match`) ORDER BY nickname ASC")
-    suspend fun getWorstScoreList(): List<Match>?
-
-    @Query("WITH cte as (SELECT * FROM `Match` ORDER BY totalScore ASC) SELECT * FROM cte GROUP BY nickname")
-    suspend fun getBestScoresPerPlayerList(): List<Match>?
-
-    @Query("WITH cte as (SELECT * FROM `Match` ORDER BY totalScore DESC) SELECT * FROM cte GROUP BY nickname")
-    suspend fun getWorstScoresPerPlayerList(): List<Match>?
-
-    @Query("SELECT CAST(AVG(totalScore) AS INT) FROM `Match` WHERE position = 1")
-    suspend fun getAverageWinnerScore(): Int?
-
-    @Query("SELECT nickname, CAST(AVG(totalScore) AS INT) AS score FROM `Match` GROUP BY nickname")
-    suspend fun getAverageScorePerPlayer(): List<ResultadoDaConsultaSQLAverageScorePerPlayer>?
-
-    @Query("SELECT * FROM `Match` WHERE blueCardScore = (SELECT MAX(blueCardScore) FROM `Match`)")
-    suspend fun getBlueRecordsList(): List<Match>?
-
-    @Query("SELECT * FROM `Match` WHERE yellowCardScore = (SELECT MAX(yellowCardScore) FROM `Match`)")
-    suspend fun getYellowRecordsList(): List<Match>?
-
-    @Query("SELECT * FROM `Match` WHERE greenCardScore = (SELECT MAX(greenCardScore) FROM `Match`)")
-    suspend fun getGreenRecordsList(): List<Match>?
-
-    @Query("SELECT * FROM `Match` WHERE purpleCardScore = (SELECT MAX(purpleCardScore) FROM `Match`)")
-    suspend fun getPurpleRecordsList(): List<Match>?
+        return matchId
+    }
 
     @Query("""
-        SELECT * FROM (
-            SELECT wonder, wonderSide, COUNT(*) AS times
-            FROM `Match`
-            WHERE position = 1
-            GROUP BY wonder, wonderSide
-            ORDER BY times DESC)
-        WHERE times = (
-            SELECT MAX(times) FROM (
-                SELECT wonder, wonderSide, COUNT(*) AS times
-                FROM `Match`
-                WHERE position = 1
-                GROUP BY wonder, wonderSide
-                ORDER BY times DESC
-            )
-        )"""
-    )
-    suspend fun getBestWonder(): List<ResultadoDaConsultaSQLBestWonder>?
+        SELECT * 
+        FROM `Match` JOIN PlayerInMatch ON `Match`.id = matchId 
+        ORDER BY dateTime
+    """)
+    suspend fun selectAllMatches(): Map<Match, List<PlayerInMatch>>
 
-    @Query("SELECT COUNT(DISTINCT matchId) FROM `Match`")
-    suspend fun getNumberOfMatches(): Int
+    @Query("SELECT * FROM PlayerInMatch WHERE matchId = :matchId")
+    suspend fun selectPlayersInMatch(matchId: Int): List<PlayerInMatch>
+
+    @Query("""
+        SELECT totalScore, name, wonder, wonderSide 
+        FROM PlayerInMatch JOIN Player ON playerId = Player.id 
+        WHERE totalScore = (
+            SELECT MAX(totalScore) FROM PlayerInMatch
+        )
+        ORDER BY name ASC
+    """)
+    suspend fun selectBestScores(): List<PlayerScore>
+
+    @Query("""
+        SELECT totalScore, name, wonder, wonderSide 
+        FROM PlayerInMatch JOIN Player ON playerId = Player.id 
+        WHERE totalScore = (
+            SELECT MIN(totalScore) FROM PlayerInMatch
+        ) 
+        ORDER BY name ASC
+    """)
+    suspend fun selectWorstScores(): List<PlayerScore>
+
+    @Query("""
+        SELECT MAX(totalScore) AS totalScore, name, wonder, wonderSide
+        FROM PlayerInMatch JOIN Player ON playerId = Player.id
+        GROUP BY name 
+        ORDER BY totalScore ASC
+    """)
+    suspend fun selectHighestScorePerPlayer(): List<PlayerScore>
+
+    @Query("""
+        SELECT MIN(totalScore) AS totalScore, name, wonder, wonderSide 
+        FROM PlayerInMatch JOIN Player ON playerId = Player.id 
+        GROUP BY name 
+        ORDER BY totalScore DESC
+    """)
+    suspend fun selectLowestScorePerPlayer(): List<PlayerScore>
+
+    @Query("""
+        SELECT CAST(AVG(totalScore) AS INT) 
+        FROM PlayerInMatch 
+        WHERE position = 1
+    """)
+    suspend fun selectAverageWinnerScore(): Int
+
+    @Query("""
+        SELECT name, CAST(AVG(totalScore) AS INT) AS score 
+        FROM PlayerInMatch JOIN Player ON playerId = Player.id
+        GROUP BY name
+    """)
+    suspend fun selectAverageScorePerPlayer(): List<ResultadoDaConsultaSQLAverageScorePerPlayer>
+
+    @Query("""
+        SELECT name, blueCardScore AS score
+        FROM PlayerInMatch JOIN Player ON playerId = Player.id
+        WHERE blueCardScore = (
+            SELECT MAX(blueCardScore) FROM PlayerInMatch
+        )
+    """)
+    suspend fun selectHighestBlueScores(): List<PlayerScoreSimple>
+
+    @Query("""
+        SELECT name, yellowCardScore AS score
+        FROM PlayerInMatch JOIN Player ON playerId = Player.id
+        WHERE yellowCardScore = (
+            SELECT MAX(yellowCardScore) FROM PlayerInMatch
+        )
+    """)
+    suspend fun selectHighestYellowScores(): List<PlayerScoreSimple>
+
+    @Query("""
+        SELECT name, greenCardScore AS score
+        FROM PlayerInMatch JOIN Player ON playerId = Player.id 
+        WHERE greenCardScore = (
+            SELECT MAX(greenCardScore) FROM PlayerInMatch
+        )
+    """)
+    suspend fun selectHighestGreenScores(): List<PlayerScoreSimple>
+
+    @Query("""
+        SELECT name, purpleCardScore AS score
+        FROM PlayerInMatch JOIN Player ON playerId = Player.id
+        WHERE purpleCardScore = (
+            SELECT MAX(purpleCardScore) FROM PlayerInMatch
+        )
+    """)
+    suspend fun selectHighestPurpleScores(): List<PlayerScoreSimple>
+
+    @Query("""
+        SELECT wonder, wonderSide, COUNT(*) AS times
+        FROM PlayerInMatch
+        WHERE position = 1
+        GROUP BY wonder, wonderSide
+        ORDER BY times DESC
+    """)
+    suspend fun selectWonderFrequency(): List<FrequencyPerWonder>
+
+    @Query("SELECT COUNT(*) FROM `Match`")
+    suspend fun selectMatchCount(): Int
+
+    @Query("DELETE FROM `Match` WHERE id = :id")
+    suspend fun deleteMatch(id: Int)
 }
+
+data class PlayerScore(
+    val name: String,
+    val totalScore: Int,
+    val wonder: Wonders,
+    val wonderSide: WonderSide,
+)
+
+data class PlayerScoreSimple(
+    val name: String,
+    val score: Int,
+)

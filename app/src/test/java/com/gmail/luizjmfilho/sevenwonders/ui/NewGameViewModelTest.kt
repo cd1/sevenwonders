@@ -7,7 +7,7 @@ import com.gmail.luizjmfilho.sevenwonders.TestData.gian
 import com.gmail.luizjmfilho.sevenwonders.TestData.ivana
 import com.gmail.luizjmfilho.sevenwonders.TestData.luiz
 import com.gmail.luizjmfilho.sevenwonders.data.NewGameRepository
-import com.gmail.luizjmfilho.sevenwonders.model.Person
+import com.gmail.luizjmfilho.sevenwonders.model.Player
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -39,7 +39,7 @@ class NewGameViewModelTest {
 
         assertEquals(listOf("","","","","","",""), state.playerNames)
         assertEquals(ActivePlayersNumber.Three, state.activePlayersNumber)
-        assertEquals(emptyList<Person>(), state.availablePlayersList)
+        assertEquals(emptyList<Player>(), state.availablePlayersList)
         assertFalse(state.isAdvanceAndAddPlayerButtonsEnable)
     }
 

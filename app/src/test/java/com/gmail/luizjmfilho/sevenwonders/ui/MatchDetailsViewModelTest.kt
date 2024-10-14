@@ -7,7 +7,6 @@ import com.gmail.luizjmfilho.sevenwonders.TestData.cristian
 import com.gmail.luizjmfilho.sevenwonders.TestData.gian
 import com.gmail.luizjmfilho.sevenwonders.TestData.ivana
 import com.gmail.luizjmfilho.sevenwonders.TestData.luiz
-import com.gmail.luizjmfilho.sevenwonders.model.PlayerDetail
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -36,7 +35,7 @@ class MatchDetailsViewModelTest {
     fun initialState() {
         val state = viewModel.uiState.value
 
-        assertEquals(emptyList<PlayerDetail>(), state.matchPlayersDetails)
+        assertEquals(emptyList<PersonDetail>(), state.matchPlayersDetails)
         assertEquals(Wonders.values().toList(), state.availableWondersList)
         assertNull(state.creationMethod)
         assertFalse(state.isAdvanceButtonEnabled)
@@ -51,7 +50,7 @@ class MatchDetailsViewModelTest {
         assertEquals(CreationMethod.AllRaffle, state.creationMethod)
         assertTrue(state.isAdvanceButtonEnabled)
         assertEquals(viewModel.playerNicknamesInThePassedOrder.size, state.matchPlayersDetails.size)
-        assertTrue(state.matchPlayersDetails.map { it.nickname }.containsAll(viewModel.playerNicknamesInThePassedOrder))
+        assertTrue(state.matchPlayersDetails.map { it.name }.containsAll(viewModel.playerNicknamesInThePassedOrder))
         assertFalse(state.matchPlayersDetails.map{ it.wonder }.contains(null))
         assertEquals(List(viewModel.playerNicknamesInThePassedOrder.size) { WonderSide.Day }, state.matchPlayersDetails.map{ it.wonderSide })
     }
@@ -79,7 +78,7 @@ class MatchDetailsViewModelTest {
         assertEquals(CreationMethod.AllChoose, state.creationMethod)
         assertFalse(state.isAdvanceButtonEnabled)
         assertEquals(viewModel.playerNicknamesInThePassedOrder.size, state.matchPlayersDetails.size)
-        assertEquals(viewModel.playerNicknamesInThePassedOrder, state.matchPlayersDetails.map { it.nickname })
+        assertEquals(viewModel.playerNicknamesInThePassedOrder, state.matchPlayersDetails.map { it.name })
         assertTrue(numbersOfNoNullWonderElements == 0)
         assertTrue(numbersOfNoNullWonderSideElements == 0)
     }
@@ -107,7 +106,7 @@ class MatchDetailsViewModelTest {
         assertEquals(CreationMethod.RafflePositionChooseWonder, state.creationMethod)
         assertFalse(state.isAdvanceButtonEnabled)
         assertEquals(viewModel.playerNicknamesInThePassedOrder.size, state.matchPlayersDetails.size)
-        assertTrue(state.matchPlayersDetails.map { it.nickname }.containsAll(viewModel.playerNicknamesInThePassedOrder))
+        assertTrue(state.matchPlayersDetails.map { it.name }.containsAll(viewModel.playerNicknamesInThePassedOrder))
         assertTrue(numbersOfNoNullWonderElements == 0)
         assertTrue(numbersOfNoNullWonderSideElements == 0)
     }
@@ -135,7 +134,7 @@ class MatchDetailsViewModelTest {
         assertEquals(CreationMethod.ChoosePositionRaffleWonder, state.creationMethod)
         assertTrue(state.isAdvanceButtonEnabled)
         assertEquals(viewModel.playerNicknamesInThePassedOrder.size, state.matchPlayersDetails.size)
-        assertEquals(viewModel.playerNicknamesInThePassedOrder, state.matchPlayersDetails.map { it.nickname })
+        assertEquals(viewModel.playerNicknamesInThePassedOrder, state.matchPlayersDetails.map { it.name })
         assertFalse(state.matchPlayersDetails.map{ it.wonder }.contains(null))
         assertEquals(List(viewModel.playerNicknamesInThePassedOrder.size) { WonderSide.Day }, state.matchPlayersDetails.map{ it.wonderSide })
     }

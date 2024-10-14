@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gmail.luizjmfilho.sevenwonders.R
-import com.gmail.luizjmfilho.sevenwonders.model.Match
 import com.gmail.luizjmfilho.sevenwonders.ui.theme.SevenWondersTheme
 
 @Composable
@@ -116,12 +115,12 @@ fun StatsScreenSecundaria(
                         )
                     } else {
                         BestOrWorstScore(
-                            matchList = statsUiState.bestScoresList,
+                            playerScoreInfos = statsUiState.bestScoresList,
                             true,
                             modifier = Modifier.padding(top = 10.dp)
                         )
                         Divider()
-                        BestOrWorstScore(matchList = statsUiState.worstScoresList, false)
+                        BestOrWorstScore(playerScoreInfos = statsUiState.worstScoresList, false)
                         Divider()
                         AverageWinnerScore(averageScore = statsUiState.averageWinnerScore)
                         Divider()
@@ -162,7 +161,7 @@ fun StatsScreenSecundaria(
 
 @Composable
 fun BestWonder(
-    wonderList: List<ResultadoDaConsultaSQLBestWonder>,
+    wonderList: List<FrequencyPerWonder>,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -535,7 +534,7 @@ fun AverageScorePerPlayer(
 
 @Composable
 fun BestOrWorstScorePerPlayer(
-    matchList: List<Match>,
+    matchList: List<ScorePerPlayer>,
     isBest: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -553,18 +552,18 @@ fun BestOrWorstScorePerPlayer(
                 .fillMaxWidth()
         ) {
             Column {
-                for (i in matchList.indices) {
+                for (wondersPerPlayer in matchList) {
                     Text(
-                        text = stringResource(R.string.just_two_dots, matchList[i].nickname),
+                        text = stringResource(R.string.just_two_dots, wondersPerPlayer.playerName),
                         modifier = Modifier
                             .padding(end = 10.dp)
                     )
                 }
             }
             Column {
-                for (i in matchList.indices) {
+                for (wondersPerPlayer in matchList) {
                     Text(
-                        text = matchList[i].totalScore.toString(),
+                        text = wondersPerPlayer.score.toString(),
                         fontWeight = FontWeight.Bold,
                         color = if (isBest) Color(0xFF30B612) else Color(0xFFF10202),
                         modifier = Modifier
@@ -573,12 +572,12 @@ fun BestOrWorstScorePerPlayer(
                 }
             }
             Column {
-                for (i in matchList.indices) {
+                for (wondersPerPlayer in matchList) {
                     Text(
                         text = stringResource(
                             R.string.names_separated_by_hifen,
-                            convertWonderToString(matchList[i].wonder),
-                            convertWonderSideToString(matchList[i].wonderSide)
+                            convertWonderToString(wondersPerPlayer.wonder),
+                            convertWonderSideToString(wondersPerPlayer.wonderSide)
                         ),
                         fontStyle = FontStyle.Italic,
                         color = Color(0xFF706E6E),
@@ -591,7 +590,7 @@ fun BestOrWorstScorePerPlayer(
 
 @Composable
 fun BestOrWorstScore(
-    matchList: List<Match>,
+    playerScoreInfos: PlayersWithSameScore,
     isBest: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -603,7 +602,7 @@ fun BestOrWorstScore(
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = if (matchList.isEmpty()) "-" else matchList[0].totalScore.toString(),
+            text = playerScoreInfos.score.toString(),
             fontWeight = FontWeight.Bold,
             color = if (isBest) Color(0xFF30B612) else Color(0xFFF10202),
             fontSize = 30.sp,
@@ -611,20 +610,20 @@ fun BestOrWorstScore(
                 .fillMaxWidth()
                 .wrapContentWidth(CenterHorizontally)
         )
-        for (i in matchList.indices) {
+        for (playerInfo in playerScoreInfos.players) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentWidth(CenterHorizontally)
             ) {
                 Text(
-                    text = matchList[i].nickname,
+                    text = playerInfo.name,
                     fontStyle = FontStyle.Italic,
                 )
                 Text(
-                    text = " (${convertWonderToString(matchList[i].wonder)} - ${
+                    text = " (${convertWonderToString(playerInfo.wonder)} - ${
                         convertWonderSideToString(
-                            matchList[i].wonderSide
+                            playerInfo.wonderSide
                         )
                     })",
                     fontStyle = FontStyle.Italic,
@@ -642,131 +641,57 @@ fun StatsScreenSecundariaPreview() {
         StatsScreenSecundaria(
             onBackClick = { },
             statsUiState = StatsUiState(
-                bestScoresList = listOf(
-                    Match(
-                        matchId = 1,
-                        nickname = "Luiz",
-                        wonder = Wonders.OLYMPIA,
-                        wonderSide = WonderSide.Day,
-                        totalScore = 58,
-                        wonderBoardScore = 10,
-                        coinScore = 3,
-                        warScore = 10,
-                        blueCardScore = 10,
-                        yellowCardScore = 10,
-                        greenCardScore = 2,
-                        purpleCardScore = 2,
-                        coinQuantity = 5,
-                        dataAndTime = "23/12/23 - 12:40",
-                        position = 2
+                bestScoresList = PlayersWithSameScore(
+                    score = 58,
+                    players = listOf(
+                        PlayersWithSameScore.Player(
+                            name = "Luiz",
+                            wonder = Wonders.OLYMPIA,
+                            wonderSide = WonderSide.Day,
+                        ),
                     ),
                 ),
-                worstScoresList = listOf(
-                    Match(
-                        matchId = 1,
-                        nickname = "Anninha",
-                        wonder = Wonders.OLYMPIA,
-                        wonderSide = WonderSide.Day,
-                        totalScore = 21,
-                        wonderBoardScore = 10,
-                        coinScore = 3,
-                        warScore = 10,
-                        blueCardScore = 10,
-                        yellowCardScore = 10,
-                        greenCardScore = 2,
-                        purpleCardScore = 2,
-                        coinQuantity = 5,
-                        dataAndTime = "23/12/23 - 12:40",
-                        position = 2
-                    ),
-                    Match(
-                        matchId = 1,
-                        nickname = "Caio",
-                        wonder = Wonders.EPHESOS,
-                        wonderSide = WonderSide.Night,
-                        totalScore = 21,
-                        wonderBoardScore = 10,
-                        coinScore = 3,
-                        warScore = 10,
-                        blueCardScore = 10,
-                        yellowCardScore = 10,
-                        greenCardScore = 2,
-                        purpleCardScore = 2,
-                        coinQuantity = 5,
-                        dataAndTime = "23/12/23 - 12:40",
-                        position = 1
+                worstScoresList = PlayersWithSameScore(
+                    score = 21,
+                    players = listOf(
+                        PlayersWithSameScore.Player(
+                            name = "Anninha",
+                            wonder = Wonders.OLYMPIA,
+                            wonderSide = WonderSide.Day,
+                        ),
+                        PlayersWithSameScore.Player(
+                            name = "Caio",
+                            wonder = Wonders.EPHESOS,
+                            wonderSide = WonderSide.Night,
+                        ),
                     ),
                 ),
                 bestScoresPerPlayerList = listOf(
-                    Match(
-                        matchId = 1,
-                        nickname = "Anninha",
+                    ScorePerPlayer(
+                        playerName = "Anninha",
+                        score = 81,
                         wonder = Wonders.OLYMPIA,
                         wonderSide = WonderSide.Day,
-                        totalScore = 81,
-                        wonderBoardScore = 10,
-                        coinScore = 3,
-                        warScore = 10,
-                        blueCardScore = 10,
-                        yellowCardScore = 10,
-                        greenCardScore = 2,
-                        purpleCardScore = 2,
-                        coinQuantity = 5,
-                        dataAndTime = "23/12/23 - 12:40",
-                        position = 2
                     ),
-                    Match(
-                        matchId = 1,
-                        nickname = "Caio",
+                    ScorePerPlayer(
+                        playerName = "Caio",
+                        score = 73,
                         wonder = Wonders.EPHESOS,
                         wonderSide = WonderSide.Night,
-                        totalScore = 73,
-                        wonderBoardScore = 10,
-                        coinScore = 3,
-                        warScore = 10,
-                        blueCardScore = 10,
-                        yellowCardScore = 10,
-                        greenCardScore = 2,
-                        purpleCardScore = 2,
-                        coinQuantity = 5,
-                        dataAndTime = "23/12/23 - 12:40",
-                        position = 1
                     ),
                 ),
                 worstScoresPerPlayerList = listOf(
-                    Match(
-                        matchId = 1,
-                        nickname = "Anninha",
+                    ScorePerPlayer(
+                        playerName = "Anninha",
+                        score = 21,
                         wonder = Wonders.OLYMPIA,
                         wonderSide = WonderSide.Day,
-                        totalScore = 21,
-                        wonderBoardScore = 10,
-                        coinScore = 3,
-                        warScore = 10,
-                        blueCardScore = 10,
-                        yellowCardScore = 10,
-                        greenCardScore = 2,
-                        purpleCardScore = 2,
-                        coinQuantity = 5,
-                        dataAndTime = "23/12/23 - 12:40",
-                        position = 2
                     ),
-                    Match(
-                        matchId = 1,
-                        nickname = "Caio",
+                    ScorePerPlayer(
+                        playerName = "Caio",
+                        score = 83,
                         wonder = Wonders.EPHESOS,
                         wonderSide = WonderSide.Night,
-                        totalScore = 23,
-                        wonderBoardScore = 10,
-                        coinScore = 3,
-                        warScore = 10,
-                        blueCardScore = 10,
-                        yellowCardScore = 10,
-                        greenCardScore = 2,
-                        purpleCardScore = 2,
-                        coinQuantity = 5,
-                        dataAndTime = "23/12/23 - 12:40",
-                        position = 1
                     ),
                 ),
                 averageWinnerScore = 58,

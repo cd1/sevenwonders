@@ -1,6 +1,6 @@
 package com.gmail.luizjmfilho.sevenwonders.data
 
-import com.gmail.luizjmfilho.sevenwonders.model.Person
+import com.gmail.luizjmfilho.sevenwonders.model.Player
 import com.gmail.luizjmfilho.sevenwonders.ui.NameOrNicknameError
 import javax.inject.Inject
 
@@ -8,21 +8,21 @@ data class AddPlayerResult(
     val nameError: NameOrNicknameError?,
 )
 
-class PlayersListRepository @Inject constructor (private val personDao: PersonDao) {
+class PlayersListRepository @Inject constructor (private val playerDao: PlayerDao) {
 
     suspend fun addPlayer(playerName: String): AddPlayerResult? {
 
         val nameWithoutSpace = playerName.trim()
         val nameError: NameOrNicknameError? = if (nameWithoutSpace == "") {
             NameOrNicknameError.Empty
-        } else if (personDao.numberOfPlayersWithThisName(nameWithoutSpace) > 0) {
+        } else if (playerDao.selectNameAlreadyExists(nameWithoutSpace)) {
             NameOrNicknameError.Exists
         } else {
             null
         }
 
         if (nameError == null) {
-            personDao.addPlayer(Person(name = nameWithoutSpace))
+            playerDao.insert(Player(name = nameWithoutSpace))
             return null
         } else {
             return AddPlayerResult(
@@ -31,11 +31,11 @@ class PlayersListRepository @Inject constructor (private val personDao: PersonDa
         }
     }
 
-    suspend fun readPlayer(): List<Person> {
-        return personDao.readPlayer()
+    suspend fun readPlayer(): List<Player> {
+        return playerDao.selectAll()
     }
 
     suspend fun deletePlayer(playerId: Int) {
-        personDao.deletePlayer(playerId)
+        playerDao.delete(playerId)
     }
 }

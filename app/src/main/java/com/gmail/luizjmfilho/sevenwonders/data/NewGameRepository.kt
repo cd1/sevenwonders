@@ -1,15 +1,11 @@
 package com.gmail.luizjmfilho.sevenwonders.data
 
-import com.gmail.luizjmfilho.sevenwonders.model.Person
+import com.gmail.luizjmfilho.sevenwonders.model.Player
 import javax.inject.Inject
 
-class NewGameRepository @Inject constructor(private val personDao: PersonDao) {
+class NewGameRepository @Inject constructor(private val playerDao: PlayerDao) {
 
-    suspend fun readPlayerWithoutActivePlayers(activePlayersList: List<String>): List<Person> {
-        return personDao.readPlayerExcept(activePlayersList)
-    }
-
-    suspend fun getPlayerFromId(playerId: Int): Person {
-        return personDao.getPlayerNameFromId(playerId)
+    suspend fun getPlayerFromId(playerId: Int): Player {
+        return playerDao.select(playerId)
     }
 }

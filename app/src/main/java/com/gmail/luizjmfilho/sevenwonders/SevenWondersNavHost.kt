@@ -146,14 +146,14 @@ fun SevenWondersNavHost() {
         ) {
             CalculationScreenPrimaria(
                 onBackClick = { navController.navigateUp() },
-                onConfirmNextScreen = {
-                    navController.navigate(route = ScreenNames.SummaryScreen.name)
+                onConfirmNextScreen = { matchId ->
+                    navController.navigate(route = "${ScreenNames.SummaryScreen.name}/$matchId")
                 }
             )
         }
 
         composable(
-            route = ScreenNames.SummaryScreen.name,
+            route = "${ScreenNames.SummaryScreen.name}/{matchId}",
             enterTransition = {
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Companion.Left,

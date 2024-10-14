@@ -71,7 +71,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gmail.luizjmfilho.sevenwonders.R
-import com.gmail.luizjmfilho.sevenwonders.model.PlayerDetail
 import com.gmail.luizjmfilho.sevenwonders.ui.theme.SevenWondersTheme
 
 const val raffleRadioButtonTestTag: String = "sortear"
@@ -351,8 +350,8 @@ fun RaffleAndChooseBox(
 }
 
 @Composable
-fun PersonAndWonderCard(
-    playerDetail: PlayerDetail,
+fun PlayerAndWonderCard(
+    playerDetail: MatchDetailsViewModel.PlayerDetail,
     creationMethod: CreationMethod,
     onTrailingIconClick: () -> Unit,
     onTextButtonClick: (String) -> Unit,
@@ -386,7 +385,7 @@ fun PersonAndWonderCard(
                 else -> {}
             }
             Text(
-                text = playerDetail.nickname,
+                text = playerDetail.name,
                 modifier = Modifier
                     .weight(0.4f),
                 textAlign = TextAlign.Center,
@@ -556,7 +555,7 @@ fun convertStringToWonder(wonderName: String?, context: Context): Wonders {
 @Composable
 fun MatchSetupBox(
     availableWondersList: List<String>,
-    matchPlayersDetails: List<PlayerDetail>,
+    matchPlayersDetails: List<MatchDetailsViewModel.PlayerDetail>,
     creationMethod: CreationMethod,
     onTrailingIconClick: (Int) -> Unit,
     onTextButtonClick: () -> Unit,
@@ -574,7 +573,7 @@ fun MatchSetupBox(
             .verticalScroll(rememberScrollState()),
     ) {
         for (player in matchPlayersDetails) {
-            PersonAndWonderCard(
+            PlayerAndWonderCard(
                 playerDetail = player,
                 creationMethod = creationMethod,
                 onTrailingIconClick = { onTrailingIconClick(matchPlayersDetails.indexOf(player)) },
@@ -684,11 +683,11 @@ fun MatchSetupBoxPreview() {
         MatchSetupBox(
             creationMethod = CreationMethod.ChoosePositionRaffleWonder,
             matchPlayersDetails = listOf(
-                PlayerDetail("Zinho", Wonders.BABYLON, wonderSide = WonderSide.Day),
-                PlayerDetail("Anninha", Wonders.ALEXANDRIA, wonderSide = WonderSide.Night),
-                PlayerDetail("Deivinho", Wonders.HALIKARNASSOS, wonderSide = WonderSide.Day),
-                PlayerDetail("Luighi", Wonders.EPHESOS, wonderSide = WonderSide.Day),
-                PlayerDetail("Iagê", Wonders.RHODOS, wonderSide = WonderSide.Night)
+                MatchDetailsViewModel.PlayerDetail("Zinho", Wonders.BABYLON, wonderSide = WonderSide.Day),
+                MatchDetailsViewModel.PlayerDetail("Anninha", Wonders.ALEXANDRIA, wonderSide = WonderSide.Night),
+                MatchDetailsViewModel.PlayerDetail("Deivinho", Wonders.HALIKARNASSOS, wonderSide = WonderSide.Day),
+                MatchDetailsViewModel.PlayerDetail("Luighi", Wonders.EPHESOS, wonderSide = WonderSide.Day),
+                MatchDetailsViewModel.PlayerDetail("Iagê", Wonders.RHODOS, wonderSide = WonderSide.Night)
             ),
             onTrailingIconClick = {},
             onTextButtonClick = {},
@@ -702,10 +701,10 @@ fun MatchSetupBoxPreview() {
 
 @Preview
 @Composable
-fun PersonAndWonderCardPreview() {
+fun PlayerAndWonderCardPreview() {
     SevenWondersTheme {
-        PersonAndWonderCard(
-            playerDetail = PlayerDetail("Zinho", Wonders.EPHESOS, WonderSide.Day),
+        PlayerAndWonderCard(
+            playerDetail = MatchDetailsViewModel.PlayerDetail("Zinho", Wonders.EPHESOS, WonderSide.Day),
             creationMethod = CreationMethod.AllChoose,
             onTrailingIconClick = {},
             onTextButtonClick = {},

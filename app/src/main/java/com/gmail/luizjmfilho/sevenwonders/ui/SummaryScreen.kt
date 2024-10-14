@@ -44,7 +44,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gmail.luizjmfilho.sevenwonders.R
-import com.gmail.luizjmfilho.sevenwonders.model.Match
 import com.gmail.luizjmfilho.sevenwonders.ui.theme.SevenWondersTheme
 
 @Composable
@@ -123,13 +122,13 @@ fun SummaryScreenSecundaria(
                                 .verticalScroll(rememberScrollState()),
                             verticalArrangement = Arrangement.spacedBy(3.dp),
                         ) {
-                            for (i in 0..<summaryUiState.matchList.size) {
+                            for (playerInfo in summaryUiState.playerInfos) {
                                 PlayerInfoRow(
-                                    wonder = summaryUiState.matchList[i].wonder,
-                                    wonderSide = summaryUiState.matchList[i].wonderSide,
-                                    nickname = summaryUiState.matchList[i].nickname,
-                                    score = summaryUiState.matchList[i].totalScore,
-                                    playerPosition = "${summaryUiState.matchList[i].position}º"
+                                    wonder = playerInfo.wonder,
+                                    wonderSide = playerInfo.wonderSide,
+                                    nickname = playerInfo.name,
+                                    score = playerInfo.totalScore,
+                                    playerPosition = "${playerInfo.position}º"
                                 )
                             }
                         }
@@ -336,22 +335,12 @@ fun SummaryScreenPreview() {
         SummaryScreenSecundaria(
             onNextClick = {},
             summaryUiState = SummaryUiState(
-                matchList = listOf(
-                    Match(
-                        matchId = 1,
-                        nickname = "Luiz",
+                playerInfos = listOf(
+                    SummaryUiState.PlayerInfo(
+                        name = "Luiz",
                         wonder = Wonders.GIZAH,
                         wonderSide = WonderSide.Night,
                         totalScore = 62,
-                        wonderBoardScore = 10,
-                        coinScore = 3,
-                        warScore = 10,
-                        blueCardScore = 10,
-                        yellowCardScore = 10,
-                        greenCardScore = 2,
-                        purpleCardScore = 2,
-                        coinQuantity = 5,
-                        dataAndTime = "oi",
                         position = 1
                     )
                 )

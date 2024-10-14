@@ -5,7 +5,7 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.gmail.luizjmfilho.sevenwonders.TestData.cristian
 import com.gmail.luizjmfilho.sevenwonders.TestData.luiz
-import com.gmail.luizjmfilho.sevenwonders.model.Person
+import com.gmail.luizjmfilho.sevenwonders.model.Player
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -66,8 +66,8 @@ class PlayersListScreenTest {
         launchScreen(
             playersListUiState = PlayersListUiState(
                 playerNames = listOf(
-                    Person(luiz.name),
-                    Person(cristian.name)
+                    Player(luiz.name),
+                    Player(cristian.name)
                 )
             ),
         )
@@ -100,8 +100,8 @@ class PlayersListScreenTest {
             },
             playersListUiState = PlayersListUiState(
                 playerNames = listOf(
-                    Person(luiz.name),
-                    Person(cristian.name)
+                    Player(luiz.name),
+                    Player(cristian.name)
                 )
             )
         )
@@ -174,7 +174,7 @@ class PlayersListScreenTest {
         launchScreen(
             playersListUiState = PlayersListUiState(
                 playerNames = listOf(
-                    Person(luiz.name)
+                    Player(luiz.name)
                 )
             )
         )
@@ -194,7 +194,7 @@ class PlayersListScreenTest {
         launchScreen(
             playersListUiState = PlayersListUiState(
                 playerNames = listOf(
-                    Person(luiz.name)
+                    Player(luiz.name)
                 )
             )
         )

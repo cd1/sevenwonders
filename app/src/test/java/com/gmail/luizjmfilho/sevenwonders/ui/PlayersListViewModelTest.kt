@@ -3,7 +3,7 @@ package com.gmail.luizjmfilho.sevenwonders.ui
 import com.gmail.luizjmfilho.sevenwonders.MainDispatcherRule
 import com.gmail.luizjmfilho.sevenwonders.data.AddPlayerResult
 import com.gmail.luizjmfilho.sevenwonders.data.PlayersListRepository
-import com.gmail.luizjmfilho.sevenwonders.model.Person
+import com.gmail.luizjmfilho.sevenwonders.model.Player
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -35,7 +35,7 @@ class PlayersListViewModelTest {
             .thenReturn(result)
     }
 
-    private suspend fun mockReadPlayer(list: List<Person> = emptyList()) {
+    private suspend fun mockReadPlayer(list: List<Player> = emptyList()) {
         whenever(repository.readPlayer())
             .thenReturn(list)
     }
@@ -48,7 +48,7 @@ class PlayersListViewModelTest {
     fun initialState() = runTest {
         val initialState = viewModel.uiState.value
         assertEquals("", initialState.nickname)
-        assertEquals(listOf<Person>(), initialState.playerNames)
+        assertEquals(listOf<Player>(), initialState.playerNames)
         assertNull(initialState.nicknameError)
     }
 
@@ -61,7 +61,7 @@ class PlayersListViewModelTest {
         verifyAddPlayer()
         val state = viewModel.uiState.value
         assertEquals(NameOrNicknameError.Empty ,state.nicknameError)
-        assertEquals(listOf<Person>(), state.playerNames)
+        assertEquals(listOf<Player>(), state.playerNames)
     }
 
     @Test
@@ -85,7 +85,7 @@ class PlayersListViewModelTest {
     fun deletePlayer_whenIClickOnIt() = runTest {
         mockReadPlayer(
             listOf(
-                Person("Oi")
+                Player("Oi")
             )
         )
         viewModel.onDeletePlayer("Luiz")
@@ -94,20 +94,20 @@ class PlayersListViewModelTest {
 
         verify(repository, times(1)).deletePlayer("Luiz")
         verify(repository, times(2)).readPlayer()
-        assertEquals(listOf(Person("Oi")), state.playerNames)
+        assertEquals(listOf(Player("Oi")), state.playerNames)
     }
 
     @Test
     fun onConfirmAddPlayerClick_WhenHappyPath() = runTest {
         whenever(repository.readPlayer())
-            .thenReturn(listOf(Person("Luiz")))
+            .thenReturn(listOf(Player("Luiz")))
 
         viewModel.updateNickname("Zinho")
         viewModel.onConfirmAddPlayerClick()
         val state = viewModel.uiState.value
 
         assertEquals("" ,state.nickname)
-        assertEquals(listOf(Person("Luiz")) ,state.playerNames)
+        assertEquals(listOf(Player("Luiz")) ,state.playerNames)
         assertNull(state.nicknameError)
     }
 }

@@ -3,8 +3,7 @@ package com.gmail.luizjmfilho.sevenwonders.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.gmail.luizjmfilho.sevenwonders.data.MatchDetailsRepository
-import com.gmail.luizjmfilho.sevenwonders.model.Person
-import com.gmail.luizjmfilho.sevenwonders.model.PlayerDetail
+import com.gmail.luizjmfilho.sevenwonders.model.Player
 import com.google.firebase.analytics.FirebaseAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,11 +24,11 @@ class MatchDetailsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(MatchDetailsUiState())
     val uiState: StateFlow<MatchDetailsUiState> = _uiState.asStateFlow()
 
-    private var persons = mutableListOf<Person>()
+    private var players = mutableListOf<Player>()
 
     init {
         viewModelScope.launch {
-            persons = matchDetailsRepository.getPersonsFromIds(playerIdsInThePassedOrder).sortedBy { playerIdsInThePassedOrder.indexOf(it.id) }.toMutableList()
+            players = matchDetailsRepository.getPlayersFromIds(playerIdsInThePassedOrder).sortedBy { playerIdsInThePassedOrder.indexOf(it.id) }.toMutableList()
         }
     }
 
@@ -49,8 +48,8 @@ class MatchDetailsViewModel @Inject constructor(
                 }
             }
         }
-        if (positionMethod == RaffleOrChoose.Raffle) persons = persons.shuffled().toMutableList()
-        val playersNicknames = persons.map { it.name }
+        if (positionMethod == RaffleOrChoose.Raffle) players = players.shuffled().toMutableList()
+        val playersNicknames = players.map { it.name }
 
         val playersWonders = when (wonderMethod) {
             RaffleOrChoose.Choose -> List(playerIdsInThePassedOrder.size) { null }
@@ -156,8 +155,8 @@ class MatchDetailsViewModel @Inject constructor(
             val maxIndex = currentState.matchPlayersDetails.size - 1
             val matchPlayersDetails = currentState.matchPlayersDetails.toMutableList()
 
-            val playerClicked = currentState.matchPlayersDetails[index]
-            val personClicked = persons[index]
+            val playerDetailClicked = currentState.matchPlayersDetails[index]
+            val playerClicked = players[index]
 
             val indexBelow = if(index != maxIndex) {
                 index + 1
@@ -165,14 +164,14 @@ class MatchDetailsViewModel @Inject constructor(
                 0
             }
 
-            val playerBelow = currentState.matchPlayersDetails[indexBelow]
-            val personBelow = persons[indexBelow]
+            val playerDetailBelow = currentState.matchPlayersDetails[indexBelow]
+            val playerBelow = players[indexBelow]
 
-            persons[index] = personBelow
-            persons[indexBelow] = personClicked
+            players[index] = playerBelow
+            players[indexBelow] = playerClicked
 
-            matchPlayersDetails[index] = playerBelow
-            matchPlayersDetails[indexBelow] = playerClicked
+            matchPlayersDetails[index] = playerDetailBelow
+            matchPlayersDetails[indexBelow] = playerDetailClicked
 
             currentState.copy(
                 matchPlayersDetails = matchPlayersDetails,
@@ -181,6 +180,12 @@ class MatchDetailsViewModel @Inject constructor(
     }
 
     fun getPlayerIds(): List<Int> {
-        return persons.map { it.id }
+        return players.map { it.id }
     }
+
+    data class PlayerDetail(
+        val name: String,
+        val wonder: Wonders?,
+        val wonderSide: WonderSide?,
+    )
 }

@@ -2,7 +2,7 @@ package com.gmail.luizjmfilho.sevenwonders.ui
 
 data class CalculationUiState(
     val subScreen: CalculationSubScreen = CalculationSubScreen.ParcialGrid,
-    val playersList: List<String> = List(7) { "" },
+    val playerNames: List<String> = List(7) { "" },
     val currentCategory: PointCategory = PointCategory.WonderBoard,
     val totalScoreList: List<Int> = List(7) {0},
     val wonderBoardScoreList: List<Int> = List(7) {0},
@@ -14,6 +14,7 @@ data class CalculationUiState(
     val greenCardScoreList: List<Int> = List(7) {0},
     val purpleCardScoreList: List<Int> = List(7) {0},
     val scienceSymbolsCurrentQuantityList: List<Int> = List(3) {0},
+    val createdMatchId: Int? = null,
 )
 
 enum class PointCategory {

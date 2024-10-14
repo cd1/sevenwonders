@@ -1,11 +1,29 @@
 package com.gmail.luizjmfilho.sevenwonders.ui
 
-import com.gmail.luizjmfilho.sevenwonders.model.Match
-
 data class MatchesHistoryUiState(
-    val playerInfoList: List<Match> = emptyList(),
-    val matchQuantity: Int = 0,
-)
+    val matches: List<Match> = emptyList(),
+) {
+    data class Match(
+        val matchId: Int,
+        val dateTime: String,
+        val players: List<Player>,
+    ) {
+        data class Player(
+            val name: String,
+            val position: Int,
+            val totalScore: Int,
+            val wonder: Wonders,
+            val wonderSide: WonderSide,
+            val wonderBoardScore: Int,
+            val coinScore: Int,
+            val warScore: Int,
+            val blueCardScore: Int,
+            val yellowCardScore: Int,
+            val greenCardScore: Int,
+            val purpleCardScore: Int,
+        )
+    }
+}
 
 enum class VisualizationMode {
     GeneralInfo,

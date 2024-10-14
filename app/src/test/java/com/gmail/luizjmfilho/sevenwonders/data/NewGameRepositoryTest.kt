@@ -3,7 +3,7 @@ package com.gmail.luizjmfilho.sevenwonders.data
 import com.gmail.luizjmfilho.sevenwonders.TestData.anna
 import com.gmail.luizjmfilho.sevenwonders.TestData.cristian
 import com.gmail.luizjmfilho.sevenwonders.TestData.luiz
-import com.gmail.luizjmfilho.sevenwonders.model.Person
+import com.gmail.luizjmfilho.sevenwonders.model.Player
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -13,7 +13,7 @@ import org.mockito.kotlin.whenever
 
 class NewGameRepositoryTest {
 
-    private lateinit var dao: PersonDao
+    private lateinit var dao: PlayerDao
     private lateinit var repository: NewGameRepository
 
     @Before
@@ -22,8 +22,8 @@ class NewGameRepositoryTest {
         repository = NewGameRepository(dao)
     }
 
-    private suspend fun mockReadPlayerExcept(excludedNicknames: List<String>, result: List<Person>) {
-        whenever(dao.readPlayerExcept(excludedNicknames))
+    private suspend fun mockReadPlayerExcept(excludedNicknames: List<String>, result: List<Player>) {
+        whenever(dao.selectPeopleExcept(excludedNicknames))
             .thenReturn(result)
     }
 

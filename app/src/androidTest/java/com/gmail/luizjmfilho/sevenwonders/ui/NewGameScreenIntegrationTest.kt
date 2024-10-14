@@ -10,7 +10,7 @@ import com.gmail.luizjmfilho.sevenwonders.TestData.cristian
 import com.gmail.luizjmfilho.sevenwonders.TestData.gian
 import com.gmail.luizjmfilho.sevenwonders.TestData.luiz
 import com.gmail.luizjmfilho.sevenwonders.data.NewGameRepository
-import com.gmail.luizjmfilho.sevenwonders.data.PersonDao
+import com.gmail.luizjmfilho.sevenwonders.data.PlayerDao
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,7 +32,7 @@ class NewGameScreenIntegrationTest {
     val hiltRule = HiltAndroidRule(this)
 
     @Inject
-    lateinit var dao: PersonDao
+    lateinit var dao: PlayerDao
 
     @Before
     fun beforeTests() {
@@ -59,9 +59,9 @@ class NewGameScreenIntegrationTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun whenChooseAPlayer_ThenHeIsShownInTheList() = runTest {
-        dao.addPlayer(luiz)
-        dao.addPlayer(anna)
-        dao.addPlayer(cristian)
+        dao.insert(luiz)
+        dao.insert(anna)
+        dao.insert(cristian)
         launchScreen()
 
         with(robot) {
@@ -107,8 +107,8 @@ class NewGameScreenIntegrationTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun whenChooseAPlayer_ThenHeDisappearFromAvailablePlayersList() = runTest {
-        dao.addPlayer(luiz)
-        dao.addPlayer(anna)
+        dao.insert(luiz)
+        dao.insert(anna)
         launchScreen()
 
         with(robot) {
@@ -132,9 +132,9 @@ class NewGameScreenIntegrationTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun whenAllPlacesWithPlayers_ThenAddAndAdvanceButtonsAreClickable() = runTest {
-        dao.addPlayer(luiz)
-        dao.addPlayer(anna)
-        dao.addPlayer(cristian)
+        dao.insert(luiz)
+        dao.insert(anna)
+        dao.insert(cristian)
         launchScreen()
 
         with(robot) {
@@ -163,10 +163,10 @@ class NewGameScreenIntegrationTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun whenAPlaceWithNameIsRemovedAndAddedAgain_ThenItCameEmpty() = runTest {
-        dao.addPlayer(luiz)
-        dao.addPlayer(anna)
-        dao.addPlayer(cristian)
-        dao.addPlayer(gian)
+        dao.insert(luiz)
+        dao.insert(anna)
+        dao.insert(cristian)
+        dao.insert(gian)
         launchScreen()
 
         with(robot) {

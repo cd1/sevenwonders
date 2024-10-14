@@ -3,7 +3,7 @@ package com.gmail.luizjmfilho.sevenwonders.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.gmail.luizjmfilho.sevenwonders.data.PlayersListRepository
-import com.gmail.luizjmfilho.sevenwonders.model.Person
+import com.gmail.luizjmfilho.sevenwonders.model.Player
 import com.google.firebase.analytics.FirebaseAnalytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,21 +25,21 @@ class PlayersListViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(PlayersListUiState())
     val uiState: StateFlow<PlayersListUiState> = _uiState.asStateFlow()
 
-    private var persons = emptyList<Person>()
+    private var players = emptyList<Player>()
 
     init {
         viewModelScope.launch {
             _uiState.update { currentState ->
-                filterPersonsByAlreadySelectedPlayerIds()
+                filterPlayersByAlreadySelectedPlayerIds()
                 currentState.copy(
-                    playerNames = persons.map { it.name },
+                    playerNames = players.map { it.name },
                 )
             }
         }
     }
 
-    private suspend fun filterPersonsByAlreadySelectedPlayerIds() {
-        persons = playersListRepository.readPlayer().filter { it.id !in alreadySelectedPlayerIds }
+    private suspend fun filterPlayersByAlreadySelectedPlayerIds() {
+        players = playersListRepository.readPlayer().filter { it.id !in alreadySelectedPlayerIds }
     }
 
     fun onNewPlayerConfirmClick() {
@@ -47,10 +47,10 @@ class PlayersListViewModel @Inject constructor(
             _uiState.update { currentState ->
                 val addPlayerResult = playersListRepository.addPlayer(currentState.newPlayerName.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() })
                 if (addPlayerResult == null) {
-                    filterPersonsByAlreadySelectedPlayerIds()
+                    filterPlayersByAlreadySelectedPlayerIds()
                     currentState.copy(
                         newPlayerName = "",
-                        playerNames = persons.map { it.name },
+                        playerNames = players.map { it.name },
                         newPlayerNameError = null,
                         isNewPlayerDialogShown = false
                     )
@@ -95,17 +95,17 @@ class PlayersListViewModel @Inject constructor(
     fun onDeletePlayer(playerIndex: Int) {
         viewModelScope.launch {
             _uiState.update { currentState ->
-                playersListRepository.deletePlayer(persons[playerIndex].id)
-                filterPersonsByAlreadySelectedPlayerIds()
+                playersListRepository.deletePlayer(players[playerIndex].id)
+                filterPlayersByAlreadySelectedPlayerIds()
                 currentState.copy(
-                    playerNames = persons.map { it.name },
+                    playerNames = players.map { it.name },
                 )
             }
         }
     }
 
     fun getPlayerIdFromIndex(index: Int): Int {
-        return persons[index].id
+        return players[index].id
     }
 
 }

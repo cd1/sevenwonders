@@ -2,7 +2,7 @@ package com.gmail.luizjmfilho.sevenwonders
 
 import android.content.Context
 import androidx.room.Room
-import com.gmail.luizjmfilho.sevenwonders.data.PersonDao
+import com.gmail.luizjmfilho.sevenwonders.data.PlayerDao
 import com.gmail.luizjmfilho.sevenwonders.data.SevenWondersDatabase
 import dagger.Module
 import dagger.Provides
@@ -26,7 +26,7 @@ object TestRoomModule {
     }
 
     @Provides
-    fun createDao(database: SevenWondersDatabase): PersonDao {
-        return database.personDao()
+    fun createDao(database: SevenWondersDatabase): PlayerDao {
+        return database.playerDao()
     }
 }
