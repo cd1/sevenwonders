@@ -1,12 +1,8 @@
 package com.gmail.luizjmfilho.sevenwonders.ui
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
@@ -19,14 +15,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,9 +31,9 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -56,6 +50,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -76,26 +71,27 @@ import com.gmail.luizjmfilho.sevenwonders.R
 import com.gmail.luizjmfilho.sevenwonders.ui.theme.SevenWondersTheme
 
 @Composable
-fun MatchesHistoryPrimaria(
+fun MatchHistoryScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    matchesHistoryViewModel: MatchesHistoryViewModel = hiltViewModel()
+    viewModel: MatchHistoryViewModel = hiltViewModel()
 ) {
-    WithLifecycleOwner(matchesHistoryViewModel)
+    WithLifecycleOwner(viewModel)
 
-    val matchesHistoryUiState by matchesHistoryViewModel.uiState.collectAsState()
-    MatchesHistorySecundaria(
+    val uiState by viewModel.uiState.collectAsState()
+
+    MatchHistoryScreen(
         onBackClick = onBackClick,
-        matchesHistoryUiState = matchesHistoryUiState,
-        onDeleteMatch = matchesHistoryViewModel::onDeleteMatchById,
-        modifier = modifier
+        uiState = uiState,
+        onDeleteMatch = viewModel::onDeleteMatch,
+        modifier = modifier,
     )
 }
 
 @Composable
-fun MatchesHistorySecundaria(
+fun MatchHistoryScreen(
+    uiState: MatchHistoryUiState,
     onBackClick: () -> Unit,
-    matchesHistoryUiState: MatchesHistoryUiState,
     onDeleteMatch: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -103,106 +99,81 @@ fun MatchesHistorySecundaria(
         topBar = {
             SevenWondersAppBar(
                 onBackClick = onBackClick,
-                title = stringResource(R.string.matches_history_screen_title)
+                title = stringResource(R.string.matches_history_screen_title),
             )
         },
-//        modifier = modifier
-//            .testTag(newGameScreenTestTag),
+        modifier = modifier,
     ) { scaffoldPadding ->
-
-        var alertDialogShown by rememberSaveable { mutableStateOf(false) }
-        var currentMatchIdBeingDelete by rememberSaveable { mutableIntStateOf(0) }
-
-        Box(
-            modifier = modifier
-                .padding(scaffoldPadding)
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.background_image),
-                contentDescription = null,
+        val contentModifier = Modifier
+            .paint(
+                painter = painterResource(R.drawable.background_image),
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
             )
-            Box(
-                modifier = Modifier
-                    .padding(start = 10.dp, end = 10.dp)
-                    .fillMaxSize(),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                if (matchesHistoryUiState.matches.isEmpty()) {
-                    Text(
-                        text = stringResource(R.string.matches_history_empty_message),
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .padding(10.dp),
-                        fontStyle = FontStyle.Italic,
-                        color = Color.Red
-                    )
-                } else {
-                    Column(
-                        modifier = Modifier
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(15.dp)
-                    ) {
-                        for ((i, match) in matchesHistoryUiState.matches.withIndex()) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .padding(
-                                        top = if (i == 0) 10.dp else 0.dp,
-                                        bottom = if (i == matchesHistoryUiState.matches.lastIndex) 10.dp else 0.dp
-                                    )
-                            ) {
-                                MatchCard(
-                                    match = match,
-                                    onDeleteMatch = {
-                                        alertDialogShown = false
-                                        onDeleteMatch(currentMatchIdBeingDelete)
-                                    },
-                                    alertDialogShown = alertDialogShown,
-                                    onCancelDialog = { alertDialogShown = false },
-                                    modifier = Modifier.weight(1f),
-                                    onDeleteClick = {
-                                        currentMatchIdBeingDelete = i
-                                        alertDialogShown = true
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            .padding(scaffoldPadding)
+            .padding(10.dp)
+            .fillMaxSize()
+
+        if (uiState.matches.isNotEmpty()) {
+            MatchCardList(
+                matches = uiState.matches,
+                onDeleteMatch = onDeleteMatch,
+                modifier = contentModifier,
+            )
+        } else {
+            NoMatchesText(
+                modifier = contentModifier,
+            )
         }
     }
 }
 
 @Composable
-fun MatchCard(
-    match: MatchesHistoryUiState.Match,
+private fun MatchCardList(
+    matches: List<MatchHistoryUiState.Match>,
+    onDeleteMatch: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(15.dp),
+    ) {
+        var isDeleteConfirmationDialogDisplayed by rememberSaveable { mutableStateOf(false) }
+        var matchIdToBeDeleted by rememberSaveable { mutableIntStateOf(0) }
+
+        for (match in matches) {
+            MatchCard(
+                match = match,
+                onDeleteMatch = {
+                    isDeleteConfirmationDialogDisplayed = false
+                    onDeleteMatch(matchIdToBeDeleted)
+                },
+                alertDialogShown = isDeleteConfirmationDialogDisplayed,
+                onCancelDialog = { isDeleteConfirmationDialogDisplayed = false },
+                onDeleteClick = {
+                    matchIdToBeDeleted = match.matchId
+                    isDeleteConfirmationDialogDisplayed = true
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun MatchCard(
+    match: MatchHistoryUiState.Match,
     onDeleteMatch: () -> Unit,
     onCancelDialog: () -> Unit,
     alertDialogShown: Boolean,
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var isContextMenuVisible by rememberSaveable {
-        mutableStateOf(false)
-    }
-    var pressOffset by remember {
-        mutableStateOf(DpOffset.Zero)
-    }
-    var itemHeight by remember {
-        mutableStateOf(0.dp)
-    }
+    var isContextMenuVisible by rememberSaveable { mutableStateOf(false) }
+    var pressOffset by remember { mutableStateOf(DpOffset.Zero) }
+    var itemHeight by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
 
-    val interactionSource = remember {
-        MutableInteractionSource()
-    }
-
-    val winnerNames = match.players.filter { it.position == 1 }.map { it.name }
-    val winnersQuantity = winnerNames.size
+    val interactionSource = remember { MutableInteractionSource() }
 
     Card(
         modifier = modifier
@@ -227,256 +198,32 @@ fun MatchCard(
         elevation = CardDefaults.cardElevation(5.dp),
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.background)
     ) {
-        var expanded by rememberSaveable { mutableStateOf(false)}
-        var visualizationMode by rememberSaveable { mutableStateOf(VisualizationMode.GeneralInfo)}
+        var isCardExpanded by rememberSaveable { mutableStateOf(false) }
+
         Column(
-            modifier = Modifier
-                .padding(
-                    start = 5.dp,
-                    top = 5.dp,
-                    end = 5.dp,
-                    bottom = if (expanded) 0.dp else 5.dp
-                )
-                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(5.dp),
+            modifier = Modifier.padding(
+                start = 5.dp,
+                top = 5.dp,
+                end = 5.dp,
+                bottom = if (isCardExpanded) 0.dp else 5.dp
+            ),
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(5.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(3.dp),
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(5.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = stringResource(id = R.string.match_number, match.matchId),
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier
-                                    .padding(end = 30.dp)
-                            )
-                            Text(
-                                text = match.dateTime,
-                                fontStyle = FontStyle.Italic,
-                                color = Color(0xFFA2A0A0),
-                            )
-                        }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Person,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                            )
-                            Text(
-                                text = "${match.players.size}",
-                                modifier = Modifier
-                                    .padding(end = 15.dp)
-                            )
-                            Text(
-                                text = stringResource(R.string.winner),
-                                color = MaterialTheme.colorScheme.secondary,
-                            )
-                            Text(
-                                text = if (winnersQuantity == 1) {
-                                    winnerNames[0]
-                                } else {
-                                    winnerNames.joinToString("; ")
-                                },
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier
-                                    .widthIn(max = 200.dp)
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.weight(1f))
-                    IconButton(
-                        onClick = {
-                            expanded = !expanded
-                        },
-                    ) {
-                        val degree by animateFloatAsState(
-                            targetValue = if (expanded) 0f else 180f,
-                            label = "Match card arrow",
-                        )
-                        Icon(
-                            imageVector = Icons.Filled.ExpandLess,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .rotate(degree)
-                        )
-                    }
-                }
-            }
+            MatchCardHeaderSection(
+                match = match,
+                isCardExpanded = isCardExpanded,
+                onCardExpandedChange = { isCardExpanded = it },
+            )
+
             AnimatedVisibility(
-                visible = expanded
+                visible = isCardExpanded,
             ) {
-                Column(
-                    modifier = Modifier
-                        .animateContentSize(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessLow
-                            )
-                        )
-                ) {
-                    Divider()
-                    when (visualizationMode) {
-                        VisualizationMode.GeneralInfo -> Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .width(IntrinsicSize.Max)
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.position_acronym),
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                for (element in match.players) {
-                                    Text(
-                                        text = stringResource(R.string.position, element.position),
-                                        modifier = Modifier
-                                            .fillMaxWidth(),
-                                        color = MaterialTheme.colorScheme.secondary
-                                    )
-                                }
-                            }
-                            Column(
-                                modifier = Modifier
-                                    .width(100.dp)
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.player),
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                for (element in match.players) {
-                                    Text(
-                                        text = element.name,
-                                        modifier = Modifier
-                                            .fillMaxWidth(),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                            }
-                            Column(
-                                modifier = Modifier
-                                    .width(IntrinsicSize.Max)
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.points_acronym),
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                for (element in match.players) {
-                                    Text(
-                                        text = element.totalScore.toString(),
-                                        modifier = Modifier
-                                            .fillMaxWidth(),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                            }
-                            Column(
-                                modifier = Modifier
-                                    .width(90.dp)
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.wonder),
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                for (element in match.players) {
-                                    Text(
-                                        text = convertWonderToString(wonder = element.wonder),
-                                        modifier = Modifier
-                                            .fillMaxWidth(),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                            }
-                            Column(
-                                modifier = Modifier
-                                    .width(IntrinsicSize.Max)
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.side),
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                for (element in match.players) {
-                                    Text(
-                                        text = convertWonderSideToString(wonderSide = element.wonderSide),
-                                        modifier = Modifier
-                                            .fillMaxWidth(),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                            }
-                        }
-                        VisualizationMode.DetailsInfo -> Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 3.dp, bottom = 3.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            SummaryGrid(players = match.players)
-                        }
-                    }
-                    Divider()
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                    ) {
-                        TextButton(
-                            onClick = {
-                                visualizationMode = if (visualizationMode == VisualizationMode.GeneralInfo) {
-                                    VisualizationMode.DetailsInfo
-                                } else {
-                                    VisualizationMode.GeneralInfo
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .wrapContentWidth()
-                        ) {
-                            Text(
-                                text = when(visualizationMode) {
-                                    VisualizationMode.GeneralInfo -> stringResource(R.string.show_details)
-                                    VisualizationMode.DetailsInfo -> stringResource(R.string.show_all_info)
-                                }
-                            )
-                        }
-                    }
-                }
+                MatchCardExpandedSection(
+                    players = match.players,
+                )
             }
+
+            // TODO: move it outside of here
             if (alertDialogShown) {
                 AlertDialog(
                     onDismissRequest = onCancelDialog,
@@ -505,6 +252,7 @@ fun MatchCard(
                 )
             }
         }
+
         DropdownMenu(
             expanded = isContextMenuVisible,
             onDismissRequest = { isContextMenuVisible = false },
@@ -513,7 +261,7 @@ fun MatchCard(
             )
         ) {
             DropdownMenuItem(
-                text = { Text(text = stringResource(id = R.string.generic_delete)) },
+                text = { Text(text = stringResource(R.string.generic_delete)) },
                 onClick = {
                     onDeleteClick()
                     isContextMenuVisible = false
@@ -524,8 +272,251 @@ fun MatchCard(
 }
 
 @Composable
+private fun MatchCardHeaderSection(
+    match: MatchHistoryUiState.Match,
+    isCardExpanded: Boolean,
+    onCardExpandedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+            modifier = Modifier.weight(1F),
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.match_number, match.matchId),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(end = 30.dp),
+                )
+                Text(
+                    text = match.dateTime,
+                    fontStyle = FontStyle.Italic,
+                    color = Color(0xFFA2A0A0),
+                )
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Person,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+
+                Text(
+                    text = "${match.players.size}",
+                    modifier = Modifier.padding(end = 15.dp),
+                )
+
+                Text(
+                    text = stringResource(R.string.winner),
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+
+                val winnerNames = match.players
+                    .filter { it.position == 1 }
+                    .map { it.name }
+                    .joinToString("; ")
+
+                Text(
+                    text = winnerNames,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+
+        IconButton(
+            modifier = Modifier.padding(horizontal = 10.dp),
+            onClick = {
+                onCardExpandedChange(!isCardExpanded)
+            },
+        ) {
+            val degree by animateFloatAsState(
+                targetValue = if (isCardExpanded) 0f else 180f,
+                label = "Match card arrow",
+            )
+
+            Icon(
+                imageVector = Icons.Filled.ExpandLess,
+                contentDescription = null,
+                modifier = Modifier.rotate(degree),
+            )
+        }
+    }
+}
+
+@Composable
+private fun MatchCardExpandedSection(
+    players: List<MatchHistoryUiState.Match.Player>,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+    ) {
+        var cardVisualizationMode by rememberSaveable { mutableStateOf(VisualizationMode.GeneralInfo) }
+
+        HorizontalDivider()
+
+        when (cardVisualizationMode) {
+            VisualizationMode.GeneralInfo -> Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Column(
+                    modifier = Modifier.width(IntrinsicSize.Max)
+                ) {
+                    Text(
+                        text = stringResource(R.string.position_acronym),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+
+                    for (player in players) {
+                        Text(
+                            text = stringResource(R.string.position, player.position),
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.secondary,
+                        )
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.width(100.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.player),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+
+                    for (player in players) {
+                        Text(
+                            text = player.name,
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.width(IntrinsicSize.Max),
+                ) {
+                    Text(
+                        text = stringResource(R.string.points_acronym),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+
+                    for (element in players) {
+                        Text(
+                            text = element.totalScore.toString(),
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.width(90.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.wonder),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+
+                    for (element in players) {
+                        Text(
+                            text = convertWonderToString(element.wonder),
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.width(IntrinsicSize.Max),
+                ) {
+                    Text(
+                        text = stringResource(R.string.side),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+
+                    for (element in players) {
+                        Text(
+                            text = convertWonderSideToString(element.wonderSide),
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+
+            VisualizationMode.DetailsInfo -> Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 3.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                SummaryGrid(players = players)
+            }
+        }
+
+        HorizontalDivider()
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            TextButton(
+                onClick = {
+                    cardVisualizationMode = if (cardVisualizationMode == VisualizationMode.GeneralInfo) {
+                        VisualizationMode.DetailsInfo
+                    } else {
+                        VisualizationMode.GeneralInfo
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentWidth()
+            ) {
+                Text(
+                    text = when(cardVisualizationMode) {
+                        VisualizationMode.GeneralInfo -> stringResource(R.string.show_details)
+                        VisualizationMode.DetailsInfo -> stringResource(R.string.show_all_info)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun SummaryGrid(
-    players: List<MatchesHistoryUiState.Match.Player>,
+    players: List<MatchHistoryUiState.Match.Player>,
     modifier: Modifier = Modifier,
 ) {
     val spaceBetweenCards = 3.dp
@@ -679,16 +670,34 @@ fun SummaryGrid(
     }
 }
 
+@Composable
+private fun NoMatchesText(
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = stringResource(R.string.matches_history_empty_message),
+        textAlign = TextAlign.Center,
+        modifier = modifier,
+        fontStyle = FontStyle.Italic,
+        color = Color.Red
+    )
+}
+
+enum class VisualizationMode {
+    GeneralInfo,
+    DetailsInfo,
+}
+
 @Preview
 @Composable
-fun MatchCardPreview() {
+private fun MatchCardPreview() {
     SevenWondersTheme {
         MatchCard(
-            match = MatchesHistoryUiState.Match(
+            match = MatchHistoryUiState.Match(
                 matchId = 1,
                 dateTime = "23/12/23 - 12:40",
                 players = listOf(
-                    MatchesHistoryUiState.Match.Player(
+                    MatchHistoryUiState.Match.Player(
                         name = "Luiz",
                         wonder = Wonders.OLYMPIA,
                         wonderSide = WonderSide.Day,
@@ -702,8 +711,8 @@ fun MatchCardPreview() {
                         purpleCardScore = 2,
                         position = 2
                     ),
-                    MatchesHistoryUiState.Match.Player(
-                        name = "Anninha",
+                    MatchHistoryUiState.Match.Player(
+                        name = "Anninha akhja kajha kjha kjha kjah ak",
                         wonder = Wonders.EPHESOS,
                         wonderSide = WonderSide.Night,
                         totalScore = 62,
@@ -716,7 +725,7 @@ fun MatchCardPreview() {
                         purpleCardScore = 2,
                         position = 1,
                     ),
-                    MatchesHistoryUiState.Match.Player(
+                    MatchHistoryUiState.Match.Player(
                         name = "Deivinho",
                         wonder = Wonders.HALIKARNASSOS,
                         wonderSide = WonderSide.Day,
@@ -730,7 +739,7 @@ fun MatchCardPreview() {
                         purpleCardScore = 2,
                         position = 4
                     ),
-                    MatchesHistoryUiState.Match.Player(
+                    MatchHistoryUiState.Match.Player(
                         name = "Gian",
                         wonder = Wonders.GIZAH,
                         wonderSide = WonderSide.Night,
@@ -756,17 +765,17 @@ fun MatchCardPreview() {
 
 @Preview
 @Composable
-fun MatchesHistorySecundariaPreview() {
+private fun MatchHistoryPreview() {
     SevenWondersTheme {
-        MatchesHistorySecundaria(
+        MatchHistoryScreen(
             onBackClick = { /*TODO*/ },
-            matchesHistoryUiState = MatchesHistoryUiState(
+            uiState = MatchHistoryUiState(
                 matches = listOf(
-                        MatchesHistoryUiState.Match(
+                        MatchHistoryUiState.Match(
                         matchId = 1,
                         dateTime = "23/12/23 - 12:40",
                         players = listOf(
-                            MatchesHistoryUiState.Match.Player(
+                            MatchHistoryUiState.Match.Player(
                                 name = "Luiz",
                                 wonder = Wonders.OLYMPIA,
                                 wonderSide = WonderSide.Day,
@@ -780,7 +789,7 @@ fun MatchesHistorySecundariaPreview() {
                                 purpleCardScore = 2,
                                 position = 2
                             ),
-                            MatchesHistoryUiState.Match.Player(
+                            MatchHistoryUiState.Match.Player(
                                 name = "Anninha",
                                 wonder = Wonders.EPHESOS,
                                 wonderSide = WonderSide.Night,
@@ -794,7 +803,7 @@ fun MatchesHistorySecundariaPreview() {
                                 purpleCardScore = 2,
                                 position = 1,
                             ),
-                            MatchesHistoryUiState.Match.Player(
+                            MatchHistoryUiState.Match.Player(
                                 name = "Deivinho",
                                 wonder = Wonders.HALIKARNASSOS,
                                 wonderSide = WonderSide.Day,
@@ -808,7 +817,7 @@ fun MatchesHistorySecundariaPreview() {
                                 purpleCardScore = 2,
                                 position = 4
                             ),
-                            MatchesHistoryUiState.Match.Player(
+                            MatchHistoryUiState.Match.Player(
                                 name = "Gian",
                                 wonder = Wonders.GIZAH,
                                 wonderSide = WonderSide.Night,
@@ -825,6 +834,20 @@ fun MatchesHistorySecundariaPreview() {
                         ),
                     ),
                 ),
+            ),
+            onDeleteMatch = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MatchHistoryNoMatchesPreview() {
+    SevenWondersTheme {
+        MatchHistoryScreen(
+            onBackClick = {},
+            uiState = MatchHistoryUiState(
+                matches = emptyList()
             ),
             onDeleteMatch = {}
         )

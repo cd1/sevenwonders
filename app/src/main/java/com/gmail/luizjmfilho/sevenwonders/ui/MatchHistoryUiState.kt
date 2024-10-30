@@ -1,13 +1,18 @@
 package com.gmail.luizjmfilho.sevenwonders.ui
 
-data class MatchesHistoryUiState(
+import androidx.compose.runtime.Immutable
+
+@Immutable
+data class MatchHistoryUiState(
     val matches: List<Match> = emptyList(),
 ) {
+    @Immutable
     data class Match(
         val matchId: Int,
         val dateTime: String,
         val players: List<Player>,
     ) {
+        @Immutable
         data class Player(
             val name: String,
             val position: Int,
@@ -23,9 +28,4 @@ data class MatchesHistoryUiState(
             val purpleCardScore: Int,
         )
     }
-}
-
-enum class VisualizationMode {
-    GeneralInfo,
-    DetailsInfo,
 }

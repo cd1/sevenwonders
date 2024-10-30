@@ -4,19 +4,19 @@ import com.gmail.luizjmfilho.sevenwonders.model.Match
 import com.gmail.luizjmfilho.sevenwonders.model.PlayerInMatch
 import javax.inject.Inject
 
-class MatchesHistoryRepository @Inject constructor(
+class MatchHistoryRepository @Inject constructor(
     private val matchDao: MatchDao,
     private val playerDao: PlayerDao,
 ) {
-    suspend fun selectAllMatches(): Map<Match, List<PlayerInMatch>> {
+    suspend fun getAllMatches(): Map<Match, List<PlayerInMatch>> {
         return matchDao.selectAllMatches()
     }
 
-    suspend fun deleteMatchById(id: Int) {
+    suspend fun deleteMatch(id: Int) {
         matchDao.deleteMatch(id)
     }
 
-    suspend fun getPlayerNameById(id: Int): String {
-        return playerDao.selectNameById(id)
+    suspend fun getPlayerName(playerId: Int): String {
+        return playerDao.selectNameById(playerId)
     }
 }

@@ -12,7 +12,7 @@ import com.gmail.luizjmfilho.sevenwonders.ui.AboutScreen
 import com.gmail.luizjmfilho.sevenwonders.ui.CalculationScreenPrimaria
 import com.gmail.luizjmfilho.sevenwonders.ui.HomeScreen
 import com.gmail.luizjmfilho.sevenwonders.ui.MatchDetailsScreenPrimaria
-import com.gmail.luizjmfilho.sevenwonders.ui.MatchesHistoryPrimaria
+import com.gmail.luizjmfilho.sevenwonders.ui.MatchHistoryScreen
 import com.gmail.luizjmfilho.sevenwonders.ui.NewGameScreenPrimaria
 import com.gmail.luizjmfilho.sevenwonders.ui.PlayersListScreenPrimaria
 import com.gmail.luizjmfilho.sevenwonders.ui.ScienceSimulatorScreen
@@ -175,7 +175,7 @@ fun SevenWondersNavHost() {
                 )
             },
         ) {
-            MatchesHistoryPrimaria(
+            MatchHistoryScreen(
                 onBackClick = {navController.navigateUp()}
             )
         }

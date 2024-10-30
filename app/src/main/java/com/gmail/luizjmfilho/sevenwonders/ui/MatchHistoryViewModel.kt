@@ -1,7 +1,8 @@
 package com.gmail.luizjmfilho.sevenwonders.ui
 
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewModelScope
-import com.gmail.luizjmfilho.sevenwonders.data.MatchesHistoryRepository
+import com.gmail.luizjmfilho.sevenwonders.data.MatchHistoryRepository
 import com.gmail.luizjmfilho.sevenwonders.model.Match
 import com.gmail.luizjmfilho.sevenwonders.model.PlayerInMatch
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -16,48 +17,52 @@ import java.time.format.FormatStyle
 import javax.inject.Inject
 
 @HiltViewModel
-class MatchesHistoryViewModel @Inject constructor(
-    private val matchesHistoryRepository: MatchesHistoryRepository,
+class MatchHistoryViewModel @Inject constructor(
+    private val repository: MatchHistoryRepository,
     firebaseAnalytics: FirebaseAnalytics,
 ) : TrackedScreenViewModel(firebaseAnalytics, "MatchesHistory") {
 
-    private val _uiState = MutableStateFlow(MatchesHistoryUiState())
-    val uiState: StateFlow<MatchesHistoryUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(MatchHistoryUiState())
+    val uiState: StateFlow<MatchHistoryUiState> = _uiState.asStateFlow()
 
     private val shortDateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
 
-    init {
+    override fun onCreate(owner: LifecycleOwner) {
+        super.onCreate(owner)
+
         viewModelScope.launch {
+            val matches = repository.getAllMatches().map { it.toUiState() }
+
             _uiState.update { currentState ->
-                currentState.copy(
-                    matches = matchesHistoryRepository.selectAllMatches().map { it.toUiState() },
-                )
+                currentState.copy(matches = matches)
             }
         }
     }
 
-    fun onDeleteMatchById(id: Int) {
+    fun onDeleteMatch(playerId: Int) {
         viewModelScope.launch {
+            repository.deleteMatch(playerId)
+
+            // Refresh the displayed matches after deleting one
+            val matches = repository.getAllMatches().map { it.toUiState() }
+
             _uiState.update { currentState ->
-                matchesHistoryRepository.deleteMatchById(id)
-                currentState.copy(
-                    matches = matchesHistoryRepository.selectAllMatches().map { it.toUiState() },
-                )
+                currentState.copy(matches = matches)
             }
         }
     }
 
-    private suspend fun Map.Entry<Match, List<PlayerInMatch>>.toUiState(): MatchesHistoryUiState.Match {
-        return MatchesHistoryUiState.Match(
+    private suspend fun Map.Entry<Match, List<PlayerInMatch>>.toUiState(): MatchHistoryUiState.Match {
+        return MatchHistoryUiState.Match(
             matchId = key.id,
             dateTime = shortDateTimeFormatter.format(key.dateTime),
             players = value.sortedBy { it.position }.map { it.toUiState() },
         )
     }
 
-    private suspend fun PlayerInMatch.toUiState(): MatchesHistoryUiState.Match.Player {
-        return MatchesHistoryUiState.Match.Player(
-            name = matchesHistoryRepository.getPlayerNameById(this.playerId),
+    private suspend fun PlayerInMatch.toUiState(): MatchHistoryUiState.Match.Player {
+        return MatchHistoryUiState.Match.Player(
+            name = repository.getPlayerName(this.playerId),
             position = this.position,
             totalScore = this.totalScore,
             wonder = this.wonder,
